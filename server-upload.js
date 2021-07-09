@@ -3,6 +3,12 @@ const multer = require('multer')
 const splitFile = require('split-file')
 const replaceString = require('replace-string')
 const fs = require('fs')
+//const JSZip = require('jszip')
+const ffmpegPath = require('@ffmpeg-installer/ffmpeg').path;
+const ffmpeg = require('fluent-ffmpeg');
+ffmpeg.setFfmpegPath(ffmpegPath);
+const { getAudioDurationInSeconds } = require('get-audio-duration');
+
 
 
 const storage = multer.diskStorage({
@@ -22,23 +28,44 @@ const app = express();
 app.use(express.static('public'))
 
 app.post('/upload', upload.single('ok'), async (req, res) =>{
-   
-    
-    await splitFile.splitFile(__dirname + '/uploads/name.mp3', req.body.num)
-    .then((names) => {
-        names.forEach((name)=>{
-            let n = name.replace(name, 'l')
-           return n;
-        })
-    })
-    .catch((err) => {
-      console.log('Error: ', err);
-    });
+  
+   getAudioDurationInSeconds('uploads/name.mp3').then((duration) => {
+         console.log(Math.floor(duration))
+             
 
+  
+  let time =  Math.floor(Math.floor(duration) / req.body.num)
+  console.log(time)
 
-    return res.json({ status: "buns"})
+  let save_dir = 'uploads'
+  ffmpeg('uploads/name.mp3').outputOptions('-f segment')
+  .outputOptions(`-segment_time ${time}`).save(`${save_dir}/%1d.mp3`)
+ 
+});
+    return res.send('s')
 
 })
+
+/* 
+async function rename2(){
+   let files = fs.readdirSync('./uploads')
+   for (const file of files) {
+    if (file===file) {
+        
+        console.log(file.pathname)
+        
+    }
+  }
+
+}
+rename2() */
+
+
+
+
+
+
+app.use('/files', express.static('uploads'))
 
 
 
